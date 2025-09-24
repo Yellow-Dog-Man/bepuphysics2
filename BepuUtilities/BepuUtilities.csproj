@@ -23,4 +23,23 @@
     <DefineConstants>TRACE;RELEASE</DefineConstants>
   </PropertyGroup>
 
+  <PropertyGroup Label="NuGet">
+    <Version>1.0.0</Version>
+    <PackageId>YellowDogMan.BepuUtilities</PackageId>
+    <Title>BepuPhysics</Title>
+    <Authors>Yellow Dog Man S.R.O and Bepu contributors</Authors>
+    <Company>Yellow Dog Man S.R.O</Company>
+    <Copyright>Yellow Dog Man S.R.O 2025</Copyright>
+    <PackageProjectUrl>https://github.com/Yellow-Dog-Man/bepuphysics2</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Yellow-Dog-Man/bepuphysics2</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+      <None Include="../README.md" Pack="true" PackagePath="/" />
+      <None Include="../LICENSE.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
 </Project>
