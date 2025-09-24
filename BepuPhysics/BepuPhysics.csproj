@@ -80,12 +80,12 @@
     <RepositoryUrl>https://github.com/Yellow-Dog-Man/bepuphysics2</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
   </PropertyGroup>
 
   <ItemGroup>
       <None Include="../README.md" Pack="true" PackagePath="/" />
-      <None Include="../LICENSE" Pack="true" PackagePath="/" />
+      <None Include="../LICENSE.md" Pack="true" PackagePath="/" />
   </ItemGroup>
 
 </Project>
