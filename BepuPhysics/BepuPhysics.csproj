@@ -80,7 +80,6 @@
     <RepositoryUrl>https://github.com/Yellow-Dog-Man/bepuphysics2</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
   </PropertyGroup>
 
   <ItemGroup>
