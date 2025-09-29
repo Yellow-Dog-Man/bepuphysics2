@@ -188,6 +188,7 @@ namespace BepuPhysics
             public float MinimumProgression;
             public float ConvergenceThreshold;
             public int MaximumIterationCount;
+            public bool CheckOnly;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool AllowTest(int childA, int childB)
@@ -225,22 +226,39 @@ namespace BepuPhysics
                     var task = Simulation.NarrowPhase.SweepTaskRegistry.GetTask(ShapeType, shape.Type);
                     if (task != null)
                     {
-                        var result = task.Sweep(
-                            ShapeData, ShapeType, Pose.Orientation, Velocity,
-                            targetShapeData, shape.Type, targetPose->Position - Pose.Position, targetPose->Orientation, new BodyVelocity(),
-                            maximumT, MinimumProgression, ConvergenceThreshold, MaximumIterationCount,
-                            ref this, Simulation.Shapes, Simulation.NarrowPhase.SweepTaskRegistry, Pool, out var t0, out var t1, out var hitLocation, out var hitNormal);
-                        if (result)
+                        if (CheckOnly)
                         {
-                            if (t1 > 0)
+                            var result = task.Check(ShapeData, ShapeType, Pose.Orientation, Velocity,
+                                targetShapeData, shape.Type, targetPose->Position - Pose.Position, targetPose->Orientation, new BodyVelocity(),
+                                maximumT, MinimumProgression, ConvergenceThreshold, MaximumIterationCount,
+                                ref this, Simulation.Shapes, Simulation.NarrowPhase.SweepTaskRegistry, Pool);
+
+                            if (result)
                             {
-                                hitLocation += Pose.Position;
-                                HitHandler.OnHit(ref maximumT, t1, hitLocation, hitNormal, reference);
-                            }
-                            else
-                            {
-                                //At t1 == 0, hitLocation and hitNormal do not have valid values, so don't imply that they exist.
+                                // Since we're not checking for an exact hit, the hit normals and locations can be random, since they
+                                // represent only the first element that was hit, but not necessarily the closest one
                                 HitHandler.OnHitAtZeroT(ref maximumT, reference);
+                            }
+                        }
+                        else
+                        {
+                            var result = task.Sweep(
+                                ShapeData, ShapeType, Pose.Orientation, Velocity,
+                                targetShapeData, shape.Type, targetPose->Position - Pose.Position, targetPose->Orientation, new BodyVelocity(),
+                                maximumT, MinimumProgression, ConvergenceThreshold, MaximumIterationCount,
+                                ref this, Simulation.Shapes, Simulation.NarrowPhase.SweepTaskRegistry, Pool, out var t0, out var t1, out var hitLocation, out var hitNormal);
+                            if (result)
+                            {
+                                if (t1 > 0)
+                                {
+                                    hitLocation += Pose.Position;
+                                    HitHandler.OnHit(ref maximumT, t1, hitLocation, hitNormal, reference);
+                                }
+                                else
+                                {
+                                    //At t1 == 0, hitLocation and hitNormal do not have valid values, so don't imply that they exist.
+                                    HitHandler.OnHitAtZeroT(ref maximumT, reference);
+                                }
                             }
                         }
                     }
@@ -265,7 +283,7 @@ namespace BepuPhysics
         /// <param name="convergenceThreshold">Threshold in terms of t parameter under which iterative sweep tests are permitted to exit in collision.</param>
         /// <param name="maximumIterationCount">Maximum number of iterations to use in iterative sweep tests.</param>
         public unsafe void Sweep<TShape, TSweepHitHandler>(TShape shape, in RigidPose pose, in BodyVelocity velocity, float maximumT, BufferPool pool, ref TSweepHitHandler hitHandler,
-            float minimumProgression, float convergenceThreshold, int maximumIterationCount)
+            float minimumProgression, float convergenceThreshold, int maximumIterationCount, bool checkOnly = false)
             where TShape : unmanaged, IConvexShape where TSweepHitHandler : ISweepHitHandler
         {
             //Build a bounding box.
@@ -288,6 +306,7 @@ namespace BepuPhysics
             dispatcher.MinimumProgression = minimumProgression;
             dispatcher.ConvergenceThreshold = convergenceThreshold;
             dispatcher.MaximumIterationCount = maximumIterationCount;
+            dispatcher.CheckOnly = checkOnly;
             BroadPhase.Sweep(min, max, direction, maximumT, pool, ref dispatcher);
             //The hit handler was copied to pass it into the child processing; since the user may (and probably does) rely on mutations, copy it back to the original reference.
             hitHandler = dispatcher.HitHandler;
@@ -308,6 +327,16 @@ namespace BepuPhysics
         public void Sweep<TShape, TSweepHitHandler>(in TShape shape, in RigidPose pose, in BodyVelocity velocity, float maximumT, BufferPool pool, ref TSweepHitHandler hitHandler)
             where TShape : unmanaged, IConvexShape where TSweepHitHandler : ISweepHitHandler
         {
+            ComputeSweepParameters(shape, velocity, maximumT, out var minimumProgressionT, out var convergenceThresholdT);
+            var maximumIterationCount = 25;
+            Sweep(shape, pose, velocity, maximumT, pool, ref hitHandler, minimumProgressionT, convergenceThresholdT, maximumIterationCount);
+        }
+
+        public void ComputeSweepParameters<TShape>(in TShape shape, in BodyVelocity velocity, float maximumT,
+            out float minimumProgressionT, out float convergenceThresholdT,
+            float progressionDistanceRatio = 0.1f, float convergenceThresholdDistanceRatio = 1e-5f)
+            where TShape : unmanaged, IConvexShape
+        {
             //Estimate some reasonable termination conditions for iterative sweeps based on the input shape size.
             shape.ComputeAngularExpansionData(out var maximumRadius, out var maximumAngularExpansion);
             var minimumRadius = maximumRadius - maximumAngularExpansion;
@@ -318,10 +347,9 @@ namespace BepuPhysics
             var convergenceThresholdDistance = 1e-5f * sizeEstimate;
             var tangentVelocity = Math.Min(velocity.Angular.Length() * maximumRadius, maximumAngularExpansion / maximumT);
             var inverseVelocity = 1f / (velocity.Linear.Length() + tangentVelocity);
-            var minimumProgressionT = minimumProgressionDistance * inverseVelocity;
-            var convergenceThresholdT = convergenceThresholdDistance * inverseVelocity;
-            var maximumIterationCount = 25;
-            Sweep(shape, pose, velocity, maximumT, pool, ref hitHandler, minimumProgressionT, convergenceThresholdT, maximumIterationCount);
+            minimumProgressionT = minimumProgressionDistance * inverseVelocity;
+            convergenceThresholdT = convergenceThresholdDistance * inverseVelocity;
+
         }
     }
 }
