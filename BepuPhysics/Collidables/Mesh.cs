@@ -71,7 +71,7 @@ namespace BepuPhysics.Collidables
 
         public Vector3 BoundsCenter
         {
-            readonly get
+            get
             {
                 return boundsCenter;
             }
@@ -82,7 +82,7 @@ namespace BepuPhysics.Collidables
         }
         public Vector3 BoundsSize
         {
-            readonly get
+            get
             {
                 return boundsHalfSize * 2;
             }
