@@ -260,7 +260,7 @@ namespace BepuPhysics.Collidables
 
 
 #if FAST_MESH_BOUNDS
-        public void ComputeBounds(in Quaternion orientation, out Vector3 min, out Vector3 max)
+        public void ComputeBounds(Quaternion orientation, out Vector3 min, out Vector3 max)
         {
             Matrix3x3.CreateFromQuaternion(orientation, out var basis);
             var x = scale.X * boundsHalfSize.X * basis.X;
