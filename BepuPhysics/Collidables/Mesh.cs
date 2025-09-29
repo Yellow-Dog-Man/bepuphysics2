@@ -45,6 +45,7 @@ namespace BepuPhysics.Collidables
         public Buffer<Triangle> Triangles;
         internal Vector3 scale;
         internal Vector3 inverseScale;
+
         /// <summary>
         /// Gets or sets the scale of the mesh.
         /// </summary>
@@ -63,6 +64,34 @@ namespace BepuPhysics.Collidables
                     value.Z != 0 ? 1f / value.Z : float.MaxValue);
             }
         }
+
+#if FAST_MESH_BOUNDS
+        internal Vector3 boundsCenter;
+        internal Vector3 boundsHalfSize;
+
+        public Vector3 BoundsCenter
+        {
+            readonly get
+            {
+                return boundsCenter;
+            }
+            set
+            {
+                boundsCenter = value;
+            }
+        }
+        public Vector3 BoundsSize
+        {
+            readonly get
+            {
+                return boundsHalfSize * 2;
+            }
+            set
+            {
+                boundsHalfSize = value * 0.5f;
+            }
+        }
+#endif
 
         /// <summary>
         /// Fills a buffer of subtrees according to a buffer of triangles.
@@ -229,6 +258,27 @@ namespace BepuPhysics.Collidables
             Vector3Wide.WriteFirst(source.C * scale, ref target.C);
         }
 
+
+#if FAST_MESH_BOUNDS
+        public void ComputeBounds(in Quaternion orientation, out Vector3 min, out Vector3 max)
+        {
+            Matrix3x3.CreateFromQuaternion(orientation, out var basis);
+            var x = scale.X * boundsHalfSize.X * basis.X;
+            var y = scale.Y * boundsHalfSize.Y * basis.Y;
+            var z = scale.Z * boundsHalfSize.Z * basis.Z;
+
+            max = Vector3.Abs(x) + Vector3.Abs(y) + Vector3.Abs(z);
+            min = -max;
+
+            var rotatedPose = Vector3.Transform(scale * boundsCenter, orientation);
+
+            min += rotatedPose;
+            max += rotatedPose;
+
+            MathChecker.Validate(min);
+            MathChecker.Validate(max);
+        }
+#else
         public readonly void ComputeBounds(Quaternion orientation, out Vector3 min, out Vector3 max)
         {
             Matrix3x3.CreateFromQuaternion(orientation, out var r);
@@ -253,6 +303,7 @@ namespace BepuPhysics.Collidables
                 max = Vector3.Max(max0, max1);
             }
         }
+#endif
 
         public static ShapeBatch CreateShapeBatch(BufferPool pool, int initialCapacity, Shapes shapeBatches)
         {
