@@ -326,7 +326,7 @@ namespace BepuPhysics.CollisionDetection
             DefaultRefinementScheduler(1f / 100f, 2, 1, 4, 16, frameIndex, tree, out rootRefinementSize, out subtreeRefinementCount, out subtreeRefinementSize, out usePriorityQueue);
         }
 
-        struct RefinementContext
+        public struct RefinementContext
         {
             public TaskStack* TaskStack;
             public Tree Tree;
