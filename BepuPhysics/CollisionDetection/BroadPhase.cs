@@ -343,7 +343,7 @@ namespace BepuPhysics.CollisionDetection
             public Buffer<Node> TargetNodes;
         }
 
-        static void ActiveEntrypointTask(long taskId, void* untypedContext, int workerIndex, IThreadDispatcher dispatcher)
+        public static void ActiveEntrypointTask(long taskId, void* untypedContext, int workerIndex, IThreadDispatcher dispatcher)
         {
             ref var context = ref *(RefinementContext*)untypedContext;
             var pool = dispatcher.WorkerPools[workerIndex];
@@ -354,7 +354,7 @@ namespace BepuPhysics.CollisionDetection
             context.Tree.Refit2WithCacheOptimization(sourceNodes, pool, dispatcher, context.TaskStack, workerIndex, context.TargetTotalTaskCount);
         }
 
-        static void StaticEntrypointTask(long taskId, void* untypedContext, int workerIndex, IThreadDispatcher dispatcher)
+        public static void StaticEntrypointTask(long taskId, void* untypedContext, int workerIndex, IThreadDispatcher dispatcher)
         {
             ref var context = ref *(RefinementContext*)untypedContext;
             var pool = dispatcher.WorkerPools[workerIndex];
