@@ -25,5 +25,5 @@ jobs:
         dotnet-version: '2.0'
     - name: build
       run: |
-        dotnet build "BepuPhysics" -c Release
-        dotnet build "BepuUtilities" -c Release
+        dotnet build "BepuPhysics" -c Debug
+        dotnet build "BepuUtilities" -c Debug
